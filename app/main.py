@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from log.log import logger
-from app.repos.database import Base, engine
+from app.database.database import Base, engine
 from app.routes.users import router as user_router
 from app.routes.tasks import router as task_router
 from app.routes.auth import router as auth_router 
