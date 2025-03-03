@@ -26,3 +26,29 @@ Detailed logs are written to console and app.log (as configured in log/log.py).
 5. Database
 SQLite database by default (in the data/ folder).
 ORM powered by SQLAlchemy.
+
+API/
+├── .env                 # Holds environment variables (SECRET_KEY, etc.)
+├── .gitignore           # Lists files/folders to exclude from version control
+├── app/
+│   ├── main.py          # FastAPI entry point
+│   ├── config.py        # Loads settings from .env (or pydantic-settings)
+│   ├── database.py      # SQLAlchemy engine, SessionLocal, Base
+│   ├── models.py        # SQLAlchemy models (User, Task)
+│   ├── routes/
+│   │   ├── auth.py      # /auth endpoints (login)
+│   │   ├── tasks.py     # /tasks endpoints
+│   │   └── users.py     # /users endpoints
+│   ├── schema/
+│   │   ├── user_schema.py  # Pydantic schemas for User
+│   │   └── task_schema.py  # Pydantic schemas for Task
+│   ├── services/
+│   │   ├── user_service.py # Business logic for users
+│   │   └── task_service.py # Business logic for tasks
+│   └── dependencies.py  # get_current_user(), etc.
+├── data/
+│   └── database.db      # SQLite database file (ignored in .gitignore if desired)
+├── log/
+│   └── log.py           # Logging configuration
+├── requirements.txt     # Python dependencies
+└── README.md            # This file
