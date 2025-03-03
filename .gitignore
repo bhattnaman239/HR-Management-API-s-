@@ -1,0 +1,38 @@
+# 1) Python bytecode & cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 2) Virtual environment
+.venv/
+venv/
+
+# 3) Environment & secret files
+.env
+
+# 4) SQLite databases
+*.db
+
+# 5) Log files
+*.log
+logs/
+
+# 6) Static/compiled assets
+staticfiles/
+
+
+# 8) Python packaging & build artifacts 
+build/
+dist/
+*.egg-info/
+
+# 9) Test, coverage, and tooling caches 
+.pytest_cache/
+.cache/
+mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+
