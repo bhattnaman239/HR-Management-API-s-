@@ -53,12 +53,11 @@ This API follows a **Role-Based Access Control (RBAC)** system.
 
 ## 🔧 **Installation & Setup**
 
-### **1️⃣ Clone the Repository**
-```
+1️⃣ Clone the Repository
 git clone https://github.com/your-username/task-user-management-api.git
 cd task-user-management-api
 
-**2️⃣ Create a Virtual Environment**
+2️⃣ Create a Virtual Environment
 python -m venv venv
 source venv/bin/activate  # macOS/Linux
 venv\Scripts\activate     # Windows
