@@ -53,24 +53,24 @@ This API follows a **Role-Based Access Control (RBAC)** system.
 
 ## 🔧 **Installation & Setup**
 
-### 🔹 1️⃣ Clone the Repository
+🔹 1️⃣ Clone the Repository
 ```bash
 git clone https://github.com/your-username/task-user-management-api.git
 cd task-user-management-api
 
-### 🔹 2️⃣ Create a Virtual Environment
+🔹 2️⃣ Create a Virtual Environment
 python -m venv venv
 source venv/bin/activate  # macOS/Linux
 venv\Scripts\activate     # Windows
 
-### 🔹 3️⃣ Install Dependencies
+🔹 3️⃣ Install Dependencies
 pip install -r requirements.txt
 
-### 🔹 4️⃣ Set Up Environment Variables
+🔹 4️⃣ Set Up Environment Variables
 SECRET_KEY="supersecretkey"
 ALGORITHM="HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-### 🔹 5️⃣ Run the FastAPI Server
+🔹 5️⃣ Run the FastAPI Server
 uvicorn app.main:app --reload
 ```
