@@ -54,7 +54,6 @@ This API follows a **Role-Based Access Control (RBAC)** system.
 ## 🔧 **Installation & Setup**
 
 🔹 1️⃣ Clone the Repository
-```bash
 git clone https://github.com/your-username/task-user-management-api.git
 cd task-user-management-api
 
