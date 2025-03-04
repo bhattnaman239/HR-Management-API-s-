@@ -32,3 +32,29 @@ This project provides a **FastAPI** application that allows you to **create, rea
    - **ORM powered by SQLAlchemy**.
 
 ---
+
+## 🔑 **Authentication & Authorization**
+This API follows a **Role-Based Access Control (RBAC)** system.
+
+| **Action**                 | **Admin** | **User** | **Reader** |
+|----------------------------|----------|----------|------------|
+| ✅ **Create Users**        | ✅ Yes    | ❌ No    | ❌ No      |
+| 🔍 **Get All Users**       | ✅ Yes    | ❌ No    | ✅ Yes     |
+| 🔍 **Get User by ID**      | ✅ Yes    | ❌ No    | ✅ Yes     |
+| ✏ **Update User**         | ✅ Yes    | ❌ No    | ❌ No      |
+| ❌ **Delete User**         | ✅ Yes    | ❌ No    | ❌ No      |
+| ✅ **Create Tasks**        | ✅ Yes    | ✅ Yes   | ❌ No      |
+| 🔍 **Get All Tasks**       | ✅ Yes    | ✅ Yes   | ✅ Yes     |
+| 🔍 **Get Task by ID**      | ✅ Yes    | ✅ Yes   | ✅ Yes     |
+| ✏ **Update Tasks**        | ✅ Yes (Any Task) | ✅ Yes (Only Own Tasks) | ❌ No |
+| ❌ **Delete Tasks**        | ✅ Yes    | ❌ No    | ❌ No      |
+
+---
+
+## 🔧 **Installation & Setup**
+
+### **1️⃣ Clone the Repository**
+```bash
+git clone https://github.com/your-username/task-user-management-api.git
+cd task-user-management-api
+
