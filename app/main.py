@@ -1,12 +1,14 @@
 import uvicorn
 from fastapi import FastAPI
-from log.log import logger
-from app.database.database import Base, engine
+from app.common.constants.log.log import logger
+from app.database.database import Base, engine, SessionLocal
 from app.routes.users import router as user_router
 from app.routes.tasks import router as task_router
-from app.routes.auth import router as auth_router 
+from app.routes.auth import router as auth_router
+from app.services.user_service import create_test_admin
 
 # Create all tables if they don't exist
+logger.info("Creating database tables if they don't exist...")
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -22,6 +24,16 @@ app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(task_router)
 
+@app.on_event("startup")
+def initialize_test_user():
+    """Create a hardcoded test admin user on server startup."""
+    db = SessionLocal()
+    try:
+        create_test_admin(db)
+    except Exception as e:
+        logger.error("Error creating test admin user: %s", str(e))
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     logger.debug("Launching Uvicorn server from main.py...")

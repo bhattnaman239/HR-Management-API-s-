@@ -6,7 +6,8 @@ from datetime import timedelta
 from app.dependencies import get_db
 from app.services.auth_service import authenticate_user, create_access_token
 from app.config import settings
-from log.log import logger
+from app.common.constants.log.log import logger
+
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

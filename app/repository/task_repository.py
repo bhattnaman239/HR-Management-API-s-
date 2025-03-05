@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from app.models.task import Task
 from app.schema.task_schema import TaskCreate, TaskUpdate
-from log.log import logger
+from app.common.constants.log.log import logger
 
 def create_task(db: Session, task: Task) -> Task:
     """Insert a new task into the database."""
@@ -39,7 +39,10 @@ def update_task(db: Session, task_id: int, task_data: TaskUpdate) -> Optional[Ta
         logger.warning("Task with ID %d not found for update", task_id)
         return None
 
-    for key, value in task_data.dict(exclude_unset=True).items():
+    if hasattr(task_data, "dict"):  # ✅ Check if task_data has .dict() method (Pydantic Model)
+        task_data = task_data.dict(exclude_unset=True)  # Convert Pydantic model to dict
+
+    for key, value in task_data.items():
         setattr(task, key, value)
     
     db.commit()

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.services.user_service import get_user_by_username, verify_password
 from app.utils.security import create_access_token
-from log.log import logger  
+from app.common.constants.log.log import logger
 
 def authenticate_user(db: Session, username: str, password: str):
     """

@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from app.models.base import Base
 from app.models.user import User
 from app.models.task import Task
-from log.log import logger 
+from app.common.constants.log.log import logger
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
 DB_PATH = os.path.join(BASE_DIR, "database.db")  

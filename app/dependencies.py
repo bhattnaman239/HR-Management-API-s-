@@ -4,13 +4,13 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from log.log import logger
+from app.common.constants.log.log import logger
 from app.database.database import SessionLocal
-from app.models.user import User  # ✅ Corrected Import
+from app.models.user import User 
+from app.common.enums.user_roles import UserRole
 from app.services.user_service import get_user_by_username
 from app.config import settings
 
-# OAuth2 scheme for JWT authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def get_db():
@@ -35,7 +35,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
 
     try:
-        # Decode JWT token
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
@@ -48,7 +47,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             logger.warning("JWT token is missing 'sub' field.")
             raise credentials_exception
 
-        # Check if the token has expired
         if expire is None or datetime.utcnow() > datetime.utcfromtimestamp(expire):
             logger.warning("JWT token has expired for user=%s", username)
             raise credentials_exception
@@ -57,7 +55,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         logger.warning("JWT decode error: %s", str(e))
         raise credentials_exception
 
-    # Fetch user from database
     user = get_user_by_username(db, username)
     if not user:
         logger.error("Authentication failed. No user found with username=%s", username)
@@ -65,3 +62,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     logger.info("Authenticated user: %s", user.username)
     return user
+
+def require_role(allowed_roles: list[UserRole]):
+    """Dependency to check user role before granting access."""
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"You do not have permission to perform this action. Required roles: {allowed_roles}"
+            )
+        return current_user
+    return role_checker

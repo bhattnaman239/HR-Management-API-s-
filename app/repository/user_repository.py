@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schema.user_schema import UserCreate, UserUpdate
 from typing import Optional, List
-from log.log import logger  
+from app.common.constants.log.log import logger
 
 def create_user(db: Session, user: User) -> User:
     """Insert a new user into the database."""
