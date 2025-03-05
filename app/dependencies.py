@@ -48,19 +48,19 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise credentials_exception
 
         if expire is None or datetime.utcnow() > datetime.utcfromtimestamp(expire):
-            logger.warning("JWT token has expired for user=%s", username)
+            logger.warning(f"JWT token has expired for user={username}", )
             raise credentials_exception
 
     except JWTError as e:
-        logger.warning("JWT decode error: %s", str(e))
+        logger.warning(f"JWT decode error: {str(e)}" )
         raise credentials_exception
 
     user = get_user_by_username(db, username)
     if not user:
-        logger.error("Authentication failed. No user found with username=%s", username)
+        logger.error(f"Authentication failed. No user found with username={username}")
         raise credentials_exception
 
-    logger.info("Authenticated user: %s", user.username)
+    logger.info(f"Authenticated user: {user.username}")
     return user
 
 def require_role(allowed_roles: list[UserRole]):

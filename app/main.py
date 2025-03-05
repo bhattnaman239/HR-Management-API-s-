@@ -31,7 +31,7 @@ def initialize_test_user():
     try:
         create_test_admin(db)
     except Exception as e:
-        logger.error("Error creating test admin user: %s", str(e))
+        logger.error(f"Error creating test admin user: {str(e)}")
     finally:
         db.close()
 

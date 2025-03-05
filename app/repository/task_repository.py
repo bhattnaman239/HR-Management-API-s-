@@ -7,11 +7,11 @@ from app.common.constants.log.log import logger
 
 def create_task(db: Session, task: Task) -> Task:
     """Insert a new task into the database."""
-    logger.info("Creating a new task with title: %s", task.title)
+    logger.info(f"Creating a new task with title: {task.title}")
     db.add(task)
     db.commit()
     db.refresh(task)
-    logger.info("Task created successfully with ID: %d", task.id)
+    logger.info(f"Task created successfully with ID: {task.id}")
     return task
 
 def get_task_by_id(db: Session, task_id: int) -> Optional[Task]:

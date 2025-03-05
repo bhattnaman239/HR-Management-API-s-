@@ -13,7 +13,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("/", response_model=UserRead, status_code=201, dependencies=[Depends(require_role([UserRole.ADMIN]))])
 def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
     """Admin can create a new user."""
-    logger.info("Admin creating a new user: %s", user_data.username)
+    logger.info(f"Admin creating a new user: {user_data.username}")
     return user_service.create_user(db, user_data)
 
 @router.get("/", response_model=List[UserRead], dependencies=[Depends(require_role([UserRole.ADMIN, UserRole.READER]))])

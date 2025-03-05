@@ -7,16 +7,16 @@ def authenticate_user(db: Session, username: str, password: str):
     """
     Authenticate user by verifying credentials.
     """
-    logger.info("Authenticating user: %s", username)
+    logger.info("Authenticating user: {username}")
     user = get_user_by_username(db, username)
     
     if not user:
-        logger.warning("Authentication failed: User %s not found", username)
+        logger.warning(f"Authentication failed: User {username} not found")
         return None
     
     if not verify_password(password, user.password):
-        logger.warning("Authentication failed: Incorrect password for user %s", username)
+        logger.warning(f"Authentication failed: Incorrect password for user {username}")
         return None
     
-    logger.info("User %s authenticated successfully", username)
+    logger.info(f"User {username} authenticated successfully")
     return user

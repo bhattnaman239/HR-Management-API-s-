@@ -8,7 +8,7 @@ from app.common.constants.log.log import logger
 
 def create_task(db: Session, task_data: TaskCreate):
     """Business logic for creating a task."""
-    logger.info("Creating new task: %s", task_data.title)
+    logger.info(f"Creating new task: {task_data.title}")
     task = Task(**task_data.dict())
     created_task = task_repository.create_task(db, task)
     logger.info("Task created successfully with ID: %d", created_task.id)
@@ -31,7 +31,7 @@ def get_all_tasks(db: Session):
 
 def update_task(db: Session, task_id: int, task_data: dict, current_user):
     """Update a task only if the user owns it or is an Admin."""
-    logger.info("User %s attempting to update Task ID: %d", current_user.username, task_id)
+    logger.info("User {current_user.username} attempting to update Task ID: {task_id}")
 
     task = task_repository.get_task_by_id(db, task_id)
     if not task:

@@ -13,7 +13,7 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 @router.post("/", response_model=TaskRead, dependencies=[Depends(require_role([UserRole.USER, UserRole.ADMIN]))])
 def create_task(task_data: TaskCreate, db: Session = Depends(get_db)):
     """Users and Admins can create tasks."""
-    logger.info("Creating task: %s", task_data.title)
+    logger.info(f"Creating task: {task_data.title}", )
     return task_service.create_task(db, task_data)
 
 @router.get("/", response_model=List[TaskRead], dependencies=[Depends(require_role([UserRole.ADMIN, UserRole.READER, UserRole.USER]))])
@@ -39,7 +39,7 @@ def update_task(
     current_user=Depends(get_current_user)
 ):
     """Users can update only their own tasks; Admins can update any task."""
-    logger.info("User %s attempting to update Task ID: %d", current_user.username, task_id)
+    logger.info(f"User {current_user.username} attempting to update Task ID: {task_id}")
     updated_task = task_service.update_task(db, task_id, task_data.dict(), current_user)
     if not updated_task:
         logger.warning("Task with ID %d not found for update", task_id)

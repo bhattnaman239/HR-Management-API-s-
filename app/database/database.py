@@ -14,7 +14,7 @@ DB_PATH = os.path.join(BASE_DIR, "database.db")
 
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-logger.info("Initializing database engine with URL: %s", SQLALCHEMY_DATABASE_URL)
+logger.info(f"Initializing database engine with URL: {SQLALCHEMY_DATABASE_URL}")
 
 try:
     engine = create_engine(
@@ -22,12 +22,12 @@ try:
     )
     logger.info("Database engine initialized successfully.")
 except Exception as e:
-    logger.error("Error initializing database engine: %s", e)
+    logger.error(f"Error initializing database engine: {e}")
     raise
 
 try:
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     logger.info("SessionLocal created successfully.")
 except Exception as e:
-    logger.error("Error creating SessionLocal: %s", e)
+    logger.error(f"Error creating SessionLocal: {e}")
     raise

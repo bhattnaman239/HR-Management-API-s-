@@ -6,7 +6,7 @@ from app.common.constants.log.log import logger
 
 def create_user(db: Session, user: User) -> User:
     """Insert a new user into the database."""
-    logger.info("Creating a new user with username: %s", user.username)
+    logger.info(f"Creating a new user with username: {user.username}")
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -25,12 +25,12 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
     """Retrieve a user by username."""
-    logger.debug("Fetching user with username: %s", username)
+    logger.debug(f"Fetching user with username: {username}", )
     user = db.query(User).filter(User.username == username).first()
     if user:
-        logger.info("User found: Username %s", username)
+        logger.info(f"User found: Username {username}")
     else:
-        logger.warning("User with username %s not found", username)
+        logger.warning(f"User with username {username} not found", )
     return user
 
 def get_all_users(db: Session) -> List[User]:
