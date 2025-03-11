@@ -6,9 +6,15 @@ from sqlalchemy.orm import sessionmaker
 from app.models.base import Base
 from app.models.user import User
 from app.models.task import Task
-from app.common.constants.log import logger
 from app.common.constants.database import SQLALCHEMY_DATABASE_URL
+from app.common.constants.log import logger
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+DATABASE_DIR = os.path.join(BASE_DIR, "database")
+
+DB_PATH = os.path.join(DATABASE_DIR, "database.db")  
+logger.info(f"Initializing database engine with URL: {SQLALCHEMY_DATABASE_URL}")
 
 try:
     engine = create_engine(
