@@ -4,11 +4,12 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from app.common.constants.log.log import logger
+from app.common.constants.log import logger
+
 from app.database.database import SessionLocal
 from app.models.user import User 
 from app.common.enums.user_roles import UserRole
-from app.services.user_service import get_user_by_username
+from app.services.user_service import UserService  
 from app.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -23,8 +24,8 @@ def get_db():
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     """
-    Validates JWT token, returns the current user.
-    If token is invalid or expired, raises 401 Unauthorized.
+    Validates JWT token and returns the current user.
+    If the token is invalid or expired, raises 401 Unauthorized.
     """
     logger.debug("Validating JWT token...")
 
@@ -48,19 +49,21 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise credentials_exception
 
         if expire is None or datetime.utcnow() > datetime.utcfromtimestamp(expire):
-            logger.warning(f"JWT token has expired for user={username}", )
+            logger.warning("JWT token has expired for user=%s", username)
             raise credentials_exception
 
     except JWTError as e:
-        logger.warning(f"JWT decode error: {str(e)}" )
+        logger.warning("JWT decode error: %s", str(e))
         raise credentials_exception
 
-    user = get_user_by_username(db, username)
+    # Use the class-based UserService to fetch the user
+    user_service = UserService(db)
+    user = user_service.get_user_by_username(username)
     if not user:
-        logger.error(f"Authentication failed. No user found with username={username}")
+        logger.error("Authentication failed. No user found with username=%s", username)
         raise credentials_exception
 
-    logger.info(f"Authenticated user: {user.username}")
+    logger.info("Authenticated user: %s", user.username)
     return user
 
 def require_role(allowed_roles: list[UserRole]):

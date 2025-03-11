@@ -2,7 +2,8 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from app.models.task import Task
 from app.schema.task_schema import TaskCreate, TaskUpdate
-from app.common.constants.log.log import logger
+from app.common.constants.log import logger
+
 
 class TaskRepository:
     def __init__(self, db: Session):

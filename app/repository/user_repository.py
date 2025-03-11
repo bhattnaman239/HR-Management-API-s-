@@ -3,7 +3,8 @@ from typing import Optional, List
 
 from app.models.user import User
 from app.schema.user_schema import UserCreate, UserUpdate
-from app.common.constants.log.log import logger
+from app.common.constants.log import logger
+
 
 class UserRepository:
     def __init__(self, db: Session):

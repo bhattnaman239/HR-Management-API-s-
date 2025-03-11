@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from app.dependencies import get_db
-from app.services.auth_service import authenticate_user, create_access_token
+from app.services.auth_service import AuthService
 from app.config import settings
-from app.common.constants.log.log import logger
+from app.common.constants.log import logger
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -20,11 +20,13 @@ def login_for_access_token(
     Expects form data: 'username' and 'password'.
     Returns a JWT access token if valid credentials.
     """
-    logger.debug(f"Login attempt for username= {form_data.username}")
+    logger.debug("Login attempt for username: %s", form_data.username)
     
-    user = authenticate_user(db, form_data.username, form_data.password)
+    auth_service = AuthService(db)
+    user = auth_service.authenticate_user(form_data.username, form_data.password)
+    
     if not user:
-        logger.warning(f"Invalid credentials for username={form_data.username}")
+        logger.warning("Invalid credentials for username: %s", form_data.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -32,7 +34,7 @@ def login_for_access_token(
         )
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token({"sub": user.username}, access_token_expires)
+    access_token = auth_service.create_access_token({"sub": user.username}, access_token_expires)
     
-    logger.info("User '{user.username}' logged in successfully")
+    logger.info("User '%s' logged in successfully", user.username)
     return {"access_token": access_token, "token_type": "bearer"}
