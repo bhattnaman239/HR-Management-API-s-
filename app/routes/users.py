@@ -14,7 +14,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("/", response_model=UserRead, status_code=201, dependencies=[Depends(require_role([UserRole.ADMIN]))])
 def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
     """Admin can create a new user."""
-    logger.info("Admin creating a new user: %s", user_data.username)
+    logger.info(f"Admin creating a new user: {user_data.username}")
     service = UserService(db)
     return service.create_user(user_data)
 
@@ -31,27 +31,27 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     service = UserService(db)
     user = service.get_user_by_id(user_id)
     if not user:
-        logger.warning("User with ID %d not found", user_id)
+        logger.warning(f"User with ID {user_id} not found")
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 @router.put("/{user_id}", response_model=UserRead, dependencies=[Depends(require_role([UserRole.ADMIN]))])
 def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db)):
     """Only Admins can update users."""
-    logger.info("Admin updating user ID: %d", user_id)
+    logger.info(f"Admin updating user ID: {user_id}")
     service = UserService(db)
     updated_user = service.update_user(user_id, user_data)
     if not updated_user:
-        logger.warning("User with ID %d not found for update", user_id)
+        logger.warning(f"User with ID {user_id} not found for update" )
         raise HTTPException(status_code=404, detail="User not found")
     return updated_user
 
 @router.delete("/{user_id}", dependencies=[Depends(require_role([UserRole.ADMIN]))])
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     """Only Admins can delete users."""
-    logger.info("Admin deleting user ID: %d", user_id)
+    logger.info(f"Admin deleting user ID: {user_id}")
     service = UserService(db)
     if not service.delete_user(user_id):
-        logger.warning("User with ID %d not found for deletion", user_id)
+        logger.warning(f"User with ID {user_id} not found for deletion")
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": f"User {user_id} deleted successfully"}

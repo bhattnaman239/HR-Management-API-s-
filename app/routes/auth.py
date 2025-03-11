@@ -20,13 +20,13 @@ def login_for_access_token(
     Expects form data: 'username' and 'password'.
     Returns a JWT access token if valid credentials.
     """
-    logger.debug("Login attempt for username: %s", form_data.username)
+    logger.debug(f"Login attempt for username: {form_data.username}" )
     
     auth_service = AuthService(db)
     user = auth_service.authenticate_user(form_data.username, form_data.password)
     
     if not user:
-        logger.warning("Invalid credentials for username: %s", form_data.username)
+        logger.warning(f"Invalid credentials for username: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -36,5 +36,5 @@ def login_for_access_token(
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token({"sub": user.username}, access_token_expires)
     
-    logger.info("User '%s' logged in successfully", user.username)
+    logger.info(f"User {user.username} logged in successfully" )
     return {"access_token": access_token, "token_type": "bearer"}

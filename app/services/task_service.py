@@ -5,6 +5,11 @@ from app.models.task import Task
 from app.schema.task_schema import TaskCreate, TaskUpdate
 from app.common.enums.user_roles import UserRole
 from app.common.constants.log import logger
+from app.common.constants.exceptions import (
+    TaskNotFoundException,
+    TaskUnauthorizedAccessException,
+    TaskDeletionException
+)
 
 
 class TaskService:
@@ -15,47 +20,47 @@ class TaskService:
 
     def create_task(self, task_data: TaskCreate):
         logger.info("Starting task creation process.")
-        logger.info("Task title: %s", task_data.title)
+        logger.info(f"Task title: {task_data.title}")
         task = Task(**task_data.dict())
         created_task = self.task_repo.create_task(task)
-        logger.info("Task created successfully with ID: %d", created_task.id)
+        logger.info(f"Task created successfully with ID: {created_task.id}")
         return created_task
 
     def get_task_by_id(self, task_id: int):
-        logger.debug("Fetching task with ID: %d", task_id)
+        logger.debug(f"Fetching task with ID: {task_id}")
         task = self.task_repo.get_task_by_id(task_id)
         if not task:
-            logger.warning("Task with ID %d not found", task_id)
-        else:
-            logger.debug("Task found: %s", task)
+            logger.warning(f"Task with ID {task_id} not found")
+            raise TaskNotFoundException(task_id)
+        logger.debug(f"Task found: {task}")
         return task
 
     def get_all_tasks(self):
         logger.debug("Fetching all tasks")
         tasks = self.task_repo.get_all_tasks()
-        logger.info("Total tasks retrieved: %d", len(tasks))
+        logger.info(f"Total tasks retrieved: { len(tasks)}")
         return tasks
 
     def update_task(self, task_id: int, task_data: dict, current_user):
-        logger.info("User %s attempting to update Task ID: %d", current_user.username, task_id)
+        logger.info(f"User {current_user.username} attempting to update Task ID: {task_id}")
         task = self.task_repo.get_task_by_id(task_id)
         if not task:
-            logger.warning("Task ID %d not found", task_id)
-            raise HTTPException(status_code=404, detail="Task not found")
+            logger.warning(f"Task ID {task_id} not found", )
+            raise TaskNotFoundException(task_id)
 
         if current_user.role != UserRole.ADMIN and task.user_id != current_user.id:
-            logger.warning("Unauthorized update attempt by User ID %d for Task ID %d", current_user.id, task_id)
-            raise HTTPException(status_code=403, detail="You do not have permission to update this task.")
+            logger.warning(f"Unauthorized update attempt by User ID {current_user.id} for Task ID {task_id}")
+            raise TaskUnauthorizedAccessException()
 
-        logger.debug("Updating task with data: %s", task_data)
+        logger.debug(f"Updating task with data: {task_data}" )
         updated_task = self.task_repo.update_task(task_id, task_data)
-        logger.info("Task ID %d updated successfully by User ID %d", task_id, current_user.id)
+        logger.info(f"Task ID {task_id} updated successfully by User ID {current_user.id}")
         return updated_task
 
     def delete_task(self, task_id: int) -> bool:
-        logger.info("Deleting task ID: %d", task_id)
+        logger.info(f"Deleting task ID: {task_id}")
         if not self.task_repo.delete_task(task_id):
-            logger.warning("Task ID %d not found for deletion", task_id)
-            raise HTTPException(status_code=404, detail="Task not found")
-        logger.info("Task ID %d deleted successfully", task_id)
+            logger.warning(f"Task ID {task_id} not found for deletion", )
+            raise TaskDeletionException(task_id)
+        logger.info(f"Task ID {task_id} deleted successfully")
         return True

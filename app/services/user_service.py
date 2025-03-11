@@ -1,4 +1,4 @@
-from fastapi import HTTPException   
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.repository.user_repository import UserRepository 
@@ -6,6 +6,13 @@ from app.models.user import User
 from app.schema.user_schema import UserCreate, UserUpdate
 from app.common.enums.user_roles import UserRole
 from app.common.constants.log import logger
+from app.common.constants.exceptions import (
+    UsernameAlreadyExistsException, 
+    UserNotFoundException, 
+    InvalidUserRoleException,
+    UserDeletionException,
+    UserUpdateException
+)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -24,21 +31,18 @@ class UserService:
         return pwd_context.verify(plain_password, hashed_password)
 
     def create_user(self, user_data: UserCreate):
-        logger.info("Starting user creation process for username: %s", user_data.username)
+        logger.info(f"Starting user creation process for username: {user_data.username}")
         if self.user_repo.get_user_by_username(user_data.username):
-            logger.warning("User creation failed: Username %s already exists", user_data.username)
-            raise HTTPException(status_code=400, detail="Username already exists")
+            logger.warning(f"User creation failed: Username {user_data.username} already exists")
+            raise UsernameAlreadyExistsException()
         
         hashed_password = self.hash_password(user_data.password)
         normalized_role = user_data.role.lower() if user_data.role else UserRole.USER.value
-        logger.debug("Normalized role: %s", normalized_role)
+        logger.debug(f"Normalized role: {normalized_role}")
 
         if normalized_role not in [role.value for role in UserRole]:
-            logger.error("Invalid role provided: %s", user_data.role)
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid role: {user_data.role}. Allowed roles: {', '.join(role.value for role in UserRole)}"
-            )
+            logger.error(f"Invalid role provided: {user_data.role}")
+            raise InvalidUserRoleException(user_data.role, [role.value for role in UserRole])
 
         user = User(
             name=user_data.name,
@@ -47,48 +51,48 @@ class UserService:
             role=user_data.role if user_data.role else UserRole.USER
         )
         created_user = self.user_repo.create_user(user)
-        logger.info("User created successfully with ID: %d, Role: %s", created_user.id, created_user.role)
+        logger.info(f"User created successfully with ID: {created_user.id}, Role: {created_user.role}")
         return created_user
 
     def get_user_by_username(self, username: str):
-        logger.debug("Fetching user by username: %s", username)
+        logger.debug(f"Fetching user by username: {username}" )
         user = self.user_repo.get_user_by_username(username)
         if not user:
-            logger.warning("User '%s' not found", username)
-        else:
-            logger.info("User '%s' found with ID: %d", username, user.id)
+            logger.warning(f"User {username} not found")
+            raise UserNotFoundException()
+        logger.info(f"User {username} found with ID: {user.id}")
         return user
 
     def get_user_by_id(self, user_id: int):
-        logger.debug("Fetching user with ID: %d", user_id)
+        logger.debug(f"Fetching user with ID: {user_id}")
         user = self.user_repo.get_user_by_id(user_id)
         if not user:
-            logger.warning("User with ID %d not found", user_id)
-        else:
-            logger.info("User with ID %d found", user_id)
+            logger.warning(f"User with ID {user_id} not found")
+            raise UserNotFoundException()
+        logger.info(f"User with ID {user_id} found")
         return user
 
     def get_all_users(self):
         logger.debug("Fetching all users")
         users = self.user_repo.get_all_users()
-        logger.info("Total users retrieved: %d", len(users))
+        logger.info(f"Total users retrieved: {len(users)}")
         return users
 
     def update_user(self, user_id: int, user_data: UserUpdate):
-        logger.info("Updating user ID: %d", user_id)
+        logger.info(f"Updating user ID: {user_id}")
         updated_user = self.user_repo.update_user(user_id, user_data)
         if not updated_user:
-            logger.warning("User ID %d not found for update", user_id)
-            raise HTTPException(status_code=404, detail="User not found")
-        logger.info("User ID %d updated successfully", user_id)
+            logger.warning(f"User ID {user_id} not found for update")
+            raise UserUpdateException(user_id)
+        logger.info(f"User ID {user_id} updated successfully")
         return updated_user
 
     def delete_user(self, user_id: int) -> bool:
-        logger.info("Deleting user ID: %d", user_id)
+        logger.info(f"Deleting user ID: {user_id}")
         if not self.user_repo.delete_user(user_id):
-            logger.warning("User ID %d not found for deletion", user_id)
-            raise HTTPException(status_code=404, detail="User not found")
-        logger.info("User ID %d deleted successfully", user_id)
+            logger.warning(f"User ID {user_id} not found for deletion")
+            raise UserDeletionException(user_id)
+        logger.info(f"User ID {user_id} deleted successfully")
         return True
 
     def create_test_admin(self):
@@ -107,5 +111,5 @@ class UserService:
         )
         self.db.add(test_admin)
         self.db.commit()
-        logger.info("Test admin user created: %s", test_username)
+        logger.info(f"Test admin user created: {test_username}")
         return test_admin

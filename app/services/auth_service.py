@@ -14,18 +14,18 @@ class AuthService:
         """
         Authenticate user by verifying credentials.
         """
-        logger.info("Authenticating user: %s", username)
+        logger.info(f"Authenticating user: {username}" )
         user = self.user_service.get_user_by_username(username)  
         
         if not user:
-            logger.warning("Authentication failed: User %s not found", username)
+            logger.warning(f"Authentication failed: User {username} not found")
             return None
 
         if not self.user_service.verify_password(password, user.password):  
-            logger.warning("Authentication failed: Incorrect password for user %s", username)
+            logger.warning(f"Authentication failed: Incorrect password for user {username}")
             return None
 
-        logger.info("User %s authenticated successfully", username)
+        logger.info(f"User {username} authenticated successfully", )
         return user
 
     def create_access_token(self, data: dict, expires_delta):
@@ -33,5 +33,5 @@ class AuthService:
         Create a JWT access token using the provided data and expiration delta.
         """
         token = AuthUtils.create_access_token(data, expires_delta)
-        logger.debug("Access token created for user: %s", data.get("sub"))
+        logger.debug(f"Access token created for user: {data.get('sub')}")
         return token
