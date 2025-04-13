@@ -1,14 +1,18 @@
+# app/common/enums/user_roles.py
 from enum import Enum
 
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    USER = "user"
-    READER = "reader"
+class UserRole(Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
+    READER = "READER"
 
     @classmethod
-    def from_string(cls, role_str: str):
-        """Normalize input role and return corresponding enum value."""
-        role_str = role_str.lower()
-        if role_str in cls._value2member_map_:
-            return cls._value2member_map_[role_str]
-        raise ValueError(f"Invalid role: {role_str}. Allowed roles: {', '.join(cls._value2member_map_.keys())}")
+    def from_string(cls, s):
+        # If s is already an instance of UserRole, return it.
+        if isinstance(s, cls):
+            return s
+        normalized = s.strip().upper()
+        if normalized in {"ADMIN", "USER"}:
+            return cls(normalized)
+        # For anything else, default to READER.
+        return cls.READER

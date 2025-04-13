@@ -78,3 +78,15 @@ class UserRepository:
         self.db.commit()
         logger.info(f"User with ID {user_id} deleted successfully")
         return True
+    
+    def get_user_by_phone(self, phone_number: str):
+        return self.db.query(User).filter(User.phone_number == phone_number).first()
+
+    def get_user_by_email(self, email: str):
+        return self.db.query(User).filter(User.email == email).first()
+
+    def get_user_by_phone(self, phone_number: str):
+            return self.db.query(User).filter(User.phone_number == phone_number).first()
+
+    def get_user_by_email(self, email: str):
+        return self.db.query(User).filter(User.email == email).first()

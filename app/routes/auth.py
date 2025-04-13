@@ -7,7 +7,10 @@ from app.dependencies import get_db
 from app.services.auth_service import AuthService
 from app.config import settings
 from app.common.constants.log import logger
+from app.config import settings
 
+SECRET_KEY = settings.SECRET_KEY  # "supersecretkey"
+ALGORITHM = settings.ALGORITHM      # "HS256"
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

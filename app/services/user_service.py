@@ -6,10 +6,10 @@ from app.models.user import User
 from app.schema.user_schema import UserCreate, UserUpdate
 from app.common.enums.user_roles import UserRole
 from app.common.constants.log import logger
+from datetime import datetime
 from app.common.constants.exceptions import (
     UsernameAlreadyExistsException, 
     UserNotFoundException, 
-    InvalidUserRoleException,
     UserDeletionException,
     UserUpdateException
 )
@@ -32,27 +32,45 @@ class UserService:
 
     def create_user(self, user_data: UserCreate):
         logger.info(f"Starting user creation process for username: {user_data.username}")
+
         if self.user_repo.get_user_by_username(user_data.username):
             logger.warning(f"User creation failed: Username {user_data.username} already exists")
             raise UsernameAlreadyExistsException()
-        
+
+        if user_data.phone_number and self.user_repo.get_user_by_phone(user_data.phone_number):
+            logger.warning(f"User creation failed: Phone number {user_data.phone_number} already in use")
+            raise HTTPException(status_code=400, detail="Phone number already in use")
+    
+        if self.user_repo.get_user_by_email(user_data.email):
+            logger.warning(f"User creation failed: Email {user_data.email} already in use")
+            raise HTTPException(status_code=400, detail="Email already in use")
+
         hashed_password = self.hash_password(user_data.password)
-        normalized_role = user_data.role.lower() if user_data.role else UserRole.USER.value
-        logger.debug(f"Normalized role: {normalized_role}")
+    # Explicitly convert the role and log what is being inserted
+        role_input = user_data.role or "USER"
+        try:
+            role_value = UserRole.from_string(role_input)
+        except Exception as exc:
+            logger.error("Failed to convert role '%s': %s", role_input, exc)
+            role_value = UserRole.READER
+        logger.debug("Final role to be saved: %s", role_value)
 
-        if normalized_role not in [role.value for role in UserRole]:
-            logger.error(f"Invalid role provided: {user_data.role}")
-            raise InvalidUserRoleException(user_data.role, [role.value for role in UserRole])
-
+        role_value = UserRole.from_string(user_data.role) if user_data.role else UserRole.USER
         user = User(
-            name=user_data.name,
-            username=user_data.username,
-            password=hashed_password,
-            role=user_data.role if user_data.role else UserRole.USER
-        )
+        name=user_data.name,
+        username=user_data.username,
+        password=hashed_password,
+            role=role_value,
+            phone_number=user_data.phone_number,
+            address=user_data.address,
+            email=user_data.email
+            )
         created_user = self.user_repo.create_user(user)
         logger.info(f"User created successfully with ID: {created_user.id}, Role: {created_user.role}")
         return created_user
+
+
+
 
     def get_user_by_username(self, username: str):
         logger.debug(f"Fetching user by username: {username}" )
@@ -96,7 +114,8 @@ class UserService:
         return True
 
     def create_test_admin(self):
-        test_username = "admin_test"
+        logger.info("Entered create_test_admin()")
+        test_username = "admin_test"    
         test_password = "Test@1234"
         if self.user_repo.get_user_by_username(test_username):
             logger.info("Test admin user already exists. Skipping creation.")
@@ -107,9 +126,14 @@ class UserService:
             name="Test Admin",
             username=test_username,
             password=hashed_password,
-            role=UserRole.ADMIN
-        )
+            role=UserRole.ADMIN,
+            created_at=datetime.utcnow(),  # explicitly setting created_at
+            phone_number="9810000000",
+            address="Greater Noida, India"
+            # email="narjcky1234@gmail.com"     
+            )
         self.db.add(test_admin)
         self.db.commit()
         logger.info(f"Test admin user created: {test_username}")
         return test_admin
+    

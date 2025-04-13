@@ -36,3 +36,8 @@ coverage.xml
 htmlcov/
 .ipynb_checkpoints/
 
+#10)SQL lite files
+*.sqlite3
+*.sqlite
+
+

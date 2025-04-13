@@ -7,9 +7,11 @@ from app.routes.users import router as user_router
 from app.routes.tasks import router as task_router
 from app.routes.auth import router as auth_router
 from app.services.user_service import UserService 
+from app.routes.otp import router as otp_router
 
 # Create all tables if they don't exist
 logger.info("Creating database tables if they don't exist...")
+# Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -24,19 +26,28 @@ logger.info("Starting the Task & User Management API...")
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(task_router)
+app.include_router(otp_router)
 
-@app.on_event("startup")
+
 def initialize_test_user():
-    """Create a hardcoded test admin user on server startup."""
     db = SessionLocal()
-    user_service = UserService(db) 
+    user_service = UserService(db)
     try:
-        user_service.create_test_admin()  
+        user_service.create_test_admin()
     except Exception as e:
         logger.error(f"Error creating test admin user: {str(e)}")
+        raise
     finally:
         db.close()
 
+# Add a startup event to initialize test admin user
+@app.on_event("startup")
+async def startup_event():
+    initialize_test_user()
+
+@app.get("/")
+async def home():
+    return {"message": "Server is running"}
+
 if __name__ == "__main__":
-    logger.debug("Launching Uvicorn server from main.py...")
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
