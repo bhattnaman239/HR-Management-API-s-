@@ -13,6 +13,7 @@ from app.common.constants.exceptions import (
     UserDeletionException,
     UserUpdateException
 )
+from typing import Optional
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -46,7 +47,6 @@ class UserService:
             raise HTTPException(status_code=400, detail="Email already in use")
 
         hashed_password = self.hash_password(user_data.password)
-    # Explicitly convert the role and log what is being inserted
         role_input = user_data.role or "USER"
         try:
             role_value = UserRole.from_string(role_input)
@@ -64,6 +64,7 @@ class UserService:
             phone_number=user_data.phone_number,
             address=user_data.address,
             email=user_data.email
+            # is_verified=True  # Assuming new users are not verified by default
             )
         created_user = self.user_repo.create_user(user)
         logger.info(f"User created successfully with ID: {created_user.id}, Role: {created_user.role}")
@@ -96,14 +97,24 @@ class UserService:
         logger.info(f"Total users retrieved: {len(users)}")
         return users
 
-    def update_user(self, user_id: int, user_data: UserUpdate):
-        logger.info(f"Updating user ID: {user_id}")
-        updated_user = self.user_repo.update_user(user_id, user_data)
-        if not updated_user:
-            logger.warning(f"User ID {user_id} not found for update")
-            raise UserUpdateException(user_id)
-        logger.info(f"User ID {user_id} updated successfully")
-        return updated_user
+    def update_user(self, user_id: int, user_data: UserUpdate) -> Optional[User]:
+        logger.info(f"Updating user with ID: {user_id}")
+        user = self.user_repo.get_user_by_id(user_id)
+        if not user:
+            logger.warning(f"User with ID {user_id} not found for update")
+            return None
+
+        updates = user_data.dict(exclude_unset=True)
+        for key, value in updates.items():
+            setattr(user, key, value)
+
+        user.updated_at = datetime.now()
+
+        self.db.commit()
+        self.db.refresh(user)
+        logger.info(f"User with ID {user_id} updated successfully")
+        return user
+
 
     def delete_user(self, user_id: int) -> bool:
         logger.info(f"Deleting user ID: {user_id}")
@@ -128,9 +139,10 @@ class UserService:
             password=hashed_password,
             role=UserRole.ADMIN,
             created_at=datetime.utcnow(),  # explicitly setting created_at
+            updated_at=datetime.utcnow(),  # explicitly setting updated_at
             phone_number="9810000000",
-            address="Greater Noida, India"
-            # email="narjcky1234@gmail.com"     
+            address="Greater Noida, India",
+            email="lolme0222@gmail.com"     
             )
         self.db.add(test_admin)
         self.db.commit()

@@ -1,77 +1,67 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+#edit 4.0
+from fastapi import Depends, HTTPException, Request, status
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
-from datetime import datetime
-
-from app.common.constants.log import logger
-
-from app.database.database import SessionLocal
-from app.models.user import User 
-from app.common.enums.user_roles import UserRole
-from app.services.user_service import UserService  
 from app.config import settings
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
+from app.services.user_service import UserService
+from app.database.database import SessionLocal  
 def get_db():
-    """Dependency to get a database session."""
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+def get_current_user(request: Request, db = Depends(get_db)):
     """
-    Validates JWT token and returns the current user.
-    If the token is invalid or expired, raises 401 Unauthorized.
+    Retrieve the current user by decoding the JWT token stored as an HTTP-only cookie.
     """
-    logger.debug("Validating JWT token...")
-
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid or expired token. Please login again.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated: Token missing.")
+    
     try:
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
-        expire = payload.get("exp")
-
         if username is None:
-            logger.warning("JWT token is missing 'sub' field.")
-            raise credentials_exception
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload.")
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token.")
+    
+    user_service = UserService(db)
+    user = user_service.get_user_by_username(username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+    
+    return user
 
-        if expire is None or datetime.utcnow() > datetime.utcfromtimestamp(expire):
-            logger.warning("JWT token has expired for user=%s", username)
-            raise credentials_exception
+def require_role(allowed_roles: list):
+    """
+    Dependency to restrict route access based on user role.
+    """
+    def role_checker(current_user=Depends(get_current_user)):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient permissions. Allowed roles: {allowed_roles}"
+            )
+        return current_user
+    return role_checker
 
-    except JWTError as e:
-        logger.warning("JWT decode error: %s", str(e))
-        raise credentials_exception
+
+def require_valid_token(request: Request, db=Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication token missing.")
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        if not username:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: missing username.")
+    except JWTError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token.") from exc
 
     user_service = UserService(db)
     user = user_service.get_user_by_username(username)
     if not user:
-        logger.error("Authentication failed. No user found with username=%s", username)
-        raise credentials_exception
-
-    logger.info("Authenticated user: %s", user.username)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
     return user
-
-def require_role(allowed_roles: list[UserRole]):
-    """Dependency to check user role before granting access."""
-    def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"You do not have permission to perform this action. Required roles: {allowed_roles}"
-            )
-        return current_user
-    return role_checker

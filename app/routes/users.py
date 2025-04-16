@@ -1,57 +1,69 @@
-from fastapi import APIRouter, Depends, HTTPException
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.dependencies import get_db, get_current_user, require_role
-from app.services.user_service import UserService 
-from app.schema.user_schema import UserCreate, UserUpdate, UserRead
+from app.dependencies import get_db, get_current_user, require_role, require_valid_token
+from app.schema.user_schema import UserCreate, UserRead, UserUpdate
+from app.services.user_service import UserService
 from app.common.enums.user_roles import UserRole
 from app.common.constants.log import logger
 
-
 router = APIRouter(prefix="/users", tags=["users"])
 
-@router.post("/", response_model=UserRead, status_code=201, dependencies=[Depends(require_role([UserRole.ADMIN]))])
-def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Admin can create a new user."""
-    logger.info(f"Admin creating a new user: {user_data.username}")
-    service = UserService(db)
-    return service.create_user(user_data)
-
-@router.get("/", response_model=List[UserRead], dependencies=[Depends(require_role([UserRole.ADMIN, UserRole.READER]))])
+@router.get("/", response_model=List[UserRead],
+    dependencies=[Depends(require_valid_token), Depends(require_role([UserRole.ADMIN, UserRole.READER]))])
 def get_users(db: Session = Depends(get_db)):
-    """Admins & Readers can get all users."""
-    logger.info("Fetching all users")
+    """
+    Only Admins and Readers can view all users.
+    """
     service = UserService(db)
     return service.get_all_users()
 
-@router.get("/{user_id}", response_model=UserRead, dependencies=[Depends(require_role([UserRole.ADMIN, UserRole.READER]))])
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    """Admins & Readers can get a user by ID."""
+@router.get("/{user_id}", response_model=UserRead,
+    dependencies=[Depends(require_valid_token)]
+)
+def get_user(user_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    """
+    Allow an admin or reader to view any user.
+    A regular user may view only their own record.
+    """
     service = UserService(db)
     user = service.get_user_by_id(user_id)
     if not user:
-        logger.warning(f"User with ID {user_id} not found")
         raise HTTPException(status_code=404, detail="User not found")
+    if current_user.role == UserRole.USER and current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this user")
     return user
 
-@router.put("/{user_id}", response_model=UserRead, dependencies=[Depends(require_role([UserRole.ADMIN]))])
-def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db)):
-    """Only Admins can update users."""
-    logger.info(f"Admin updating user ID: {user_id}")
+@router.post("/", response_model=UserRead,
+    dependencies=[Depends(require_valid_token), Depends(require_role([UserRole.ADMIN]))]
+)
+def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    """
+    Only an OTP-verified Admin may create a new user.
+    """
     service = UserService(db)
-    updated_user = service.update_user(user_id, user_data)
-    if not updated_user:
-        logger.warning(f"User with ID {user_id} not found for update" )
-        raise HTTPException(status_code=404, detail="User not found")
-    return updated_user
+    return service.create_user(user_data)
 
-@router.delete("/{user_id}", dependencies=[Depends(require_role([UserRole.ADMIN]))])
+@router.put("/{user_id}", response_model=UserRead,
+    dependencies=[Depends(require_valid_token), Depends(require_role([UserRole.ADMIN]))]
+)
+def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db)):
+    """
+    Only an OTP-verified Admin can update a user's data.
+    """
+    service = UserService(db)
+    return service.update_user(user_id, user_data)
+
+@router.delete("/{user_id}",
+    dependencies=[Depends(require_valid_token), Depends(require_role([UserRole.ADMIN]))]
+)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
-    """Only Admins can delete users."""
-    logger.info(f"Admin deleting user ID: {user_id}")
+    """
+    Only an OTP-verified Admin can delete a user.
+    """
     service = UserService(db)
     if not service.delete_user(user_id):
-        logger.warning(f"User with ID {user_id} not found for deletion")
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": f"User {user_id} deleted successfully"}

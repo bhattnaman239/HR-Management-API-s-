@@ -57,8 +57,8 @@ class UserRepository:
             logger.warning(f"User with ID {user_id} not found for update")
             return None
 
-        updates = user_data.dict(exclude_unset=True)
-        for key, value in updates.items():
+        # updates = user_data.dict(exclude_unset=True)
+        for key, value in user_data.items():
             setattr(user, key, value)
 
         self.db.commit()

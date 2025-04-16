@@ -1,9 +1,6 @@
 # otp_schemas.py
-from pydantic import BaseModel, EmailStr
-
-class OTPRequest(BaseModel):
-    email: EmailStr
+from pydantic import BaseModel
 
 class OTPVerify(BaseModel):
-    email: EmailStr
     otp: str
+    

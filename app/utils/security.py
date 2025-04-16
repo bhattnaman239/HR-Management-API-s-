@@ -4,7 +4,6 @@ from passlib.context import CryptContext
 from app.config import settings
 from app.common.constants.log import logger
 
-# JWT access token creation utility
 class AuthUtils:
     """Utility class for authentication-related operations."""
     @staticmethod
@@ -24,7 +23,6 @@ class AuthUtils:
             logger.error(f"Error generating JWT token: {str(e)}")
             return None
 
-# Password hashing utility
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password: str) -> str:
@@ -33,3 +31,6 @@ def get_password_hash(password: str) -> str:
     """
     logger.debug("Hashing password")
     return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)

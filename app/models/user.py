@@ -46,8 +46,8 @@
 
 #     tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
 
-
-from sqlalchemy import Column, Integer, String, Enum, DateTime, func
+#edit2.0
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .base import Base
@@ -62,11 +62,12 @@ class User(Base):
         username = Column(String, unique=True, index=True, nullable=False)
         password = Column(String, nullable=False)
         role = Column(UserRoleType, default=UserRole.USER, nullable=False)
-        # Use server_default for the database to automatically set the timestamp.
         created_at = Column(DateTime, server_default=func.now(), nullable=False)
-        updated_at = Column(DateTime, server_default=None, onupdate=func.now(), nullable=True)
+        updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
         phone_number = Column(String, unique=True, nullable=True)
         address = Column(String, nullable=True)
-        # email = Column(String, unique=True, nullable=False, index=True)
         email = Column(String, unique=True, nullable=False, index=True)
         tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
+        # edit2.0
+        is_verified = Column(Boolean, default=False, nullable=False)
