@@ -13,6 +13,7 @@ from app.common.constants.log import logger
 from app.schema.otp_schema import OTPVerify
 from app.schema.user_schema import UserCreate
 from app.common.enums.user_roles import UserRole
+from app.schema.otp_schema import ResendOTPRequest
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -26,7 +27,6 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     The user is created with is_verified=False and an OTP is sent to their email.
     If the user attempts to sign up with a role of 'ADMIN', the request is rejected.
     """
-    # Reject signups where role is admin (only "USER" or "READER" allowed)
     if user_data.role.upper() == "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -62,8 +62,21 @@ async def verify_signup_otp(otp_data: OTPVerify, username: str, db: Session = De
         logger.warning(f"Invalid OTP for user {user.username}")
         raise HTTPException(status_code=400, detail="Invalid or expired OTP")
 
+@router.post("/resend-signup-otp")
+async def resend_signup_otp(
+    payload: ResendOTPRequest,
+    db: Session = Depends(get_db),
+):
+    auth_service = AuthService(db)
+    user = auth_service.get_user_by_username(payload.username)
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="Account already verified.")
+    await send_otp(user.email)
+    logger.info(f"Resent signup OTP to {user.email}")
+    return {"message": "OTP resent to your registered email."}
+
 ###############################
-# Signin Endpoint (No OTP Required)
+# Signin Endpoint 
 ###############################
 @router.post("/signin")
 def signin(
@@ -85,7 +98,6 @@ def signin(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password"
         )
-    # Removed OTP verification check during signin
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token({"sub": user.username}, access_token_expires)
     logger.info(f"User {user.username} signed in successfully.")

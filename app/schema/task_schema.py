@@ -24,6 +24,7 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = Field(None, example="Update Description")
     due_date: Optional[date] = Field(None, example="2025-12-31")
     status: Optional[str] = Field(None, example="Completed")
+    
     @validator('due_date')
     def due_date_must_be_future(cls, v):
         if v is not None and v <= date.today():
@@ -37,7 +38,7 @@ class TaskRead(TaskBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         json_encoders = {
             datetime: lambda v: v.astimezone(india_tz).strftime("%d-%m-%Y")
         }

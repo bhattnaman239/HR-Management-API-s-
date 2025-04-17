@@ -13,7 +13,7 @@ class UserRoleType(TypeDecorator):
         if value is None:
             return None
         if isinstance(value, UserRole):
-            return value.value  # e.g., "ADMIN"
+            return value.value  
         if isinstance(value, str):
             return value.strip().upper()
         raise ValueError("Invalid type for UserRole")

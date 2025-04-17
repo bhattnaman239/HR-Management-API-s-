@@ -60,13 +60,13 @@ def update_task(task_id: int, task_data: TaskUpdate, db: Session = Depends(get_d
     return updated_task
 
 @router.delete("/{task_id}",
-    dependencies=[Depends(require_valid_token), Depends(require_role([UserRole.ADMIN]))]
+    dependencies=[Depends(require_valid_token), Depends(require_role([UserRole.USER, UserRole.ADMIN]))]
 )
-def delete_task(task_id: int, db: Session = Depends(get_db)):
+def delete_task(task_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     """
     Only an OTP-verified Admin may delete a task.
     """
     service = TaskService(db)
-    if not service.delete_task(task_id):
+    if not service.delete_task(task_id,current_user):
         raise HTTPException(status_code=404, detail="Task not found")
     return {"message": f"Task {task_id} deleted successfully"}

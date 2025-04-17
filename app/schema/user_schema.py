@@ -7,7 +7,6 @@ from app.common.enums.user_roles import UserRole
 from pydantic.networks import EmailStr
 import re
 
-# Define the Indian time zone (UTC+05:30)
 india_tz = timezone(timedelta(hours=5, minutes=30))
 
 class UserBase(BaseModel):
